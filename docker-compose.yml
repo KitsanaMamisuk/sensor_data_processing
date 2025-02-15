@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:16.2-alpine
+    ports:
+      - 5432:5432
+    volumes:
+      - ./_docker_volumes/postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=P@ssw0rd
+      - POSTGRES_DB=sensor_db
+
+
+  redis:
+    image: redis:7.2.3-alpine
+    volumes:
+      - ./_docker_volumes/redis:/data
+
+  django:
+    depends_on:
+      - postgres
+      - redis
+    build:
+      context: ./backend
+    ports:
+      - 8000:8000
+    volumes:
+      - ./backend:/opt/app
+    command: tail -f /dev/null
+    env_file:
+      - .env
+
+  celery:
+    command: tail -f /dev/null
+    build:
+      context: ./backend
+    volumes:
+      - ./backend:/opt/app
