@@ -51,6 +51,12 @@ jedi==0.19.2
     # via ipython
 matplotlib-inline==0.1.7
     # via ipython
+numpy==2.2.3
+    # via
+    #   -r requirements.in
+    #   pandas
+pandas==2.2.3
+    # via -r requirements.in
 parso==0.8.4
     # via jedi
 pexpect==4.9.0
@@ -65,10 +71,15 @@ pure-eval==0.2.3
     # via stack-data
 pygments==2.19.1
     # via ipython
+python-dateutil==2.9.0.post0
+    # via pandas
 pytz==2024.2
     # via
     #   -r requirements.in
     #   djangorestframework
+    #   pandas
+six==1.17.0
+    # via python-dateutil
 sqlparse==0.5.3
     # via django
 stack-data==0.6.3
@@ -77,6 +88,8 @@ traitlets==5.14.3
     # via
     #   ipython
     #   matplotlib-inline
+tzdata==2025.1
+    # via pandas
 uvicorn==0.32.1
     # via -r requirements.in
 wcwidth==0.2.13
