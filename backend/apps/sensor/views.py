@@ -126,3 +126,52 @@ class SensorProcessedView(APIView):
 
         return Response(response_serializer.data)
 
+
+class SensorAggregatedView(APIView):
+    def get(self, request):
+        serializer = SensorAggregationTimeWindowSerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        time_window = serializer.validated_data['time_window']
+        last_data = SensorData.objects.order_by('-timestamp').first()
+        
+        # Map time window
+        time_delta_map = {
+            '10m': timedelta(minutes=10),
+            '1h': timedelta(hours=1),
+            '24h': timedelta(hours=24),
+        }
+        try:
+            start_time = last_data.timestamp - time_delta_map[time_window]
+        except (TypeError, ValueError) as e:
+            raise ValueError({'error': f'An error occurred {e}'})
+
+        # Fetch data in a single query
+        data = SensorData.objects.filter(timestamp__gte=start_time).values_list(
+            'temperature', 'humidity', 'air_quality'
+        )
+        if not data:
+            raise Http404()
+        # Convert to NumPy array for fast calculation
+        data_array = np.array(data, dtype=np.float64)
+        temperature, humidity, air_quality = data_array.T  # Transpose to separate columns
+        response_data = {
+            'time_window': time_window,
+            'temperature': {
+                'mean': float(np.nanmean(temperature)),
+                'min': float(np.nanmin(temperature)),
+                'max': float(np.nanmax(temperature)),
+            },
+            'humidity': {
+                'mean': float(np.nanmean(humidity)),
+                'min': float(np.nanmin(humidity)),
+                'max': float(np.nanmax(humidity)),
+            },
+            'air_quality': {
+                'mean': float(np.nanmean(air_quality)),
+                'min': float(np.nanmin(air_quality)),
+                'max': float(np.nanmax(air_quality)),
+            },
+        }
+
+        output_serializer = SensorAggregationDataSerializer(response_data)
+        return Response(output_serializer.data)
