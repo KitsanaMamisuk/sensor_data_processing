@@ -81,3 +81,48 @@ class SensorDataIngestView(APIView):
 
         except Exception as e:
             raise ValidationError({'error': f'An error occurred {e}'})
+
+
+class SensorProcessedView(APIView):
+    serializer_class = SensorProcessedDataSerializer
+    
+    @staticmethod
+    def clean_data(queryset):
+        try:
+            df = pd.DataFrame.from_records(queryset.values())
+
+            if df.empty:
+                return df
+
+            # Remove duplicates
+            df = df.drop_duplicates()
+
+            # Handle missing values (Fill with column mean)
+            df.fillna(df.mean(), inplace=True)
+
+            return df
+        except Exception as e:
+            raise ValueError({'error': f'An error occurred {e}'})
+
+    @staticmethod
+    def detect_anomalies(df, threshold=3.0):
+        try:
+            for column in ['temperature', 'humidity', 'air_quality']:
+                if column in df.columns:
+                    mean = df[column].mean()
+                    std = df[column].std()
+                    df[f'{column}_anomaly'] = (np.abs(df[column] - mean) / std) > threshold
+            return df
+        except Exception as e:
+            raise ValueError({'error': f'An error occurred {e}'})
+        
+    def get(self, request, *args, **kwargs):
+        queryset = SensorData.objects.all().order_by('timestamp')
+        if not queryset.exists():
+            raise Http404()
+        df = self.clean_data(queryset)
+        df = self.detect_anomalies(df)
+        response_serializer = self.serializer_class(df.to_dict(orient='records'), many=True)
+
+        return Response(response_serializer.data)
+
