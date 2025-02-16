@@ -10,16 +10,9 @@ services:
       - POSTGRES_PASSWORD=P@ssw0rd
       - POSTGRES_DB=sensor_db
 
-
-  redis:
-    image: redis:7.2.3-alpine
-    volumes:
-      - ./_docker_volumes/redis:/data
-
   django:
     depends_on:
       - postgres
-      - redis
     build:
       context: ./backend
     ports:
@@ -30,9 +23,29 @@ services:
     env_file:
       - .env
 
-  celery:
-    command: tail -f /dev/null
+  frontend:
     build:
-      context: ./backend
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - 5173:5173
     volumes:
-      - ./backend:/opt/app
+      - ./frontend:/app
+    command: tail -f /dev/null
+    # environment:
+    #   - NODE_ENV=development
+
+  # redis:
+  #   image: redis:7.2.3-alpine
+  #   volumes:
+  #     - ./_docker_volumes/redis:/data
+
+  # celery:
+  #   command: tail -f /dev/null
+  #   build:
+  #     context: ./backend
+  #   volumes:
+  #     - ./backend:/opt/app
+
+
+  

@@ -7,9 +7,16 @@ down:
 run-backend:
 	docker-compose exec django sh -c "pip install -r requirements.txt && python manage.py migrate && uvicorn --host 0.0.0.0 --reload configs.asgi:application"
 
+run-frontend:
+	docker-compose up -d frontend
+	docker-compose exec frontend sh -c 'npm run start --host 0.0.0.0'
 
-build:
-	docker-compose build
+build-backend:
+	docker-compose build django
+
+build-frontend:
+	docker-compose up -d frontend
+	docker-compose exec frontend sh -c "npm install && npm run build"
 
 pip-compile:
 	docker-compose run --rm django sh -c "pip install pip-tools && pip-compile"
