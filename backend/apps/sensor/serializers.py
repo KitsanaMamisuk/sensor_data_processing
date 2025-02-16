@@ -9,6 +9,17 @@ class SensorDataSerializer(ModelControllerSerializer):
         fields = '__all__'
 
 
+class SensorAggregationTimeWindowSerializer(serializers.Serializer):
+    time_window = serializers.ChoiceField(choices=['10m', '1h', '24h'], required=True)
+
+
+class SensorAggregationDataSerializer(serializers.Serializer):
+    time_window = serializers.CharField()
+    temperature = serializers.DictField()
+    humidity = serializers.DictField()
+    air_quality = serializers.DictField()
+
+
 class SensorProcessedDataSerializer(serializers.Serializer):
     timestamp = serializers.DateTimeField()
     temperature = serializers.FloatField()
@@ -17,3 +28,4 @@ class SensorProcessedDataSerializer(serializers.Serializer):
     temperature_anomaly = serializers.BooleanField()
     humidity_anomaly = serializers.BooleanField()
     air_quality_anomaly = serializers.BooleanField()
+
