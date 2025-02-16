@@ -17,7 +17,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
+from apps.sensor.views import TimeWindowView
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('sensor/', include('configs.api_urls', namespace='sensor')),
+    path('dropdown/time_window/', TimeWindowView.as_view(), name='time_window_dropdown'),
 ]

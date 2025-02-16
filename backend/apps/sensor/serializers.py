@@ -1,3 +1,4 @@
+from apps.sensor.choices import TimeWindow
 from .models import SensorData
 from model_controller.serializers import ModelControllerSerializer
 from rest_framework import serializers
@@ -10,7 +11,7 @@ class SensorDataSerializer(ModelControllerSerializer):
 
 
 class SensorAggregationTimeWindowSerializer(serializers.Serializer):
-    time_window = serializers.ChoiceField(choices=['10m', '1h', '24h'], required=True)
+    time_window = serializers.ChoiceField(choices=TimeWindow.choices, required=True)
 
 
 class SensorAggregationDataSerializer(serializers.Serializer):
@@ -28,4 +29,3 @@ class SensorProcessedDataSerializer(serializers.Serializer):
     temperature_anomaly = serializers.BooleanField()
     humidity_anomaly = serializers.BooleanField()
     air_quality_anomaly = serializers.BooleanField()
-
