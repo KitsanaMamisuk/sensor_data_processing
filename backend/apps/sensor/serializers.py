@@ -1,6 +1,7 @@
 from apps.sensor.choices import TimeWindow
 from .models import SensorData
 from rest_framework import serializers
+from apps.sensor.utils import validate_float
 
 
 class SensorDataSerializer(serializers.ModelSerializer):
@@ -8,6 +9,17 @@ class SensorDataSerializer(serializers.ModelSerializer):
         model = SensorData
         fields = '__all__'
 
+    def validate_temperature(self, temperature):
+        temperature = validate_float(temperature)
+        return temperature
+    
+    def validate_humidity(self, humidity):
+        humidity = validate_float(humidity)
+        return humidity
+    
+    def validate_air_quality(self, air_quality):
+        air_quality = validate_float(air_quality)
+        return air_quality
 
 class SensorAggregationTimeWindowSerializer(serializers.Serializer):
     time_window = serializers.ChoiceField(choices=TimeWindow.choices, required=True)
