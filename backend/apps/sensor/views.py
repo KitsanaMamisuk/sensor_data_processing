@@ -1,6 +1,5 @@
-from decimal import InvalidOperation
-from typing import Optional, Union
 from apps.sensor.choices import TimeWindow
+from apps.sensor.utils import validate_float
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
@@ -39,13 +38,6 @@ class SensorDataView(APIView):
 class SensorDataIngestView(APIView):
     serializer_class = SensorDataSerializer
 
-    @staticmethod
-    def validate_float(value) -> Optional[Union[float, None]]:
-        try:
-            return float(value)
-        except (InvalidOperation, ValueError, TypeError):
-            return None
-
     def post(self, request, *args, **kwargs):
         file = request.FILES.get('file', None)
 
@@ -78,9 +70,9 @@ class SensorDataIngestView(APIView):
                 timestamp = row['timestamp']
                 if not timestamp:
                     raise ValueError({'error': 'Timestamp Invalid'})
-                temperature = self.validate_float(row.get('temperature'))
-                humidity = self.validate_float(row.get('humidity'))
-                air_quality = self.validate_float(row.get('air_quality'))
+                temperature = validate_float(row.get('temperature'))
+                humidity = validate_float(row.get('humidity'))
+                air_quality = validate_float(row.get('air_quality'))
                 sensor_data_list.append(
                     SensorData(
                         timestamp=timestamp,
