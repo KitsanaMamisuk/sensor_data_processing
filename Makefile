@@ -9,14 +9,14 @@ run-backend:
 
 run-frontend:
 	docker-compose up -d frontend
-	docker-compose exec frontend sh -c 'npm run start --host 0.0.0.0'
+	docker-compose exec frontend sh -c 'npm run dev'
 
 build-backend:
 	docker-compose build django
 
 build-frontend:
 	docker-compose up -d frontend
-	docker-compose exec frontend sh -c "npm install && npm run build"
+	docker-compose exec frontend sh -c "npm install && npm run build-only"
 
 pip-compile:
 	docker-compose run --rm django sh -c "pip install pip-tools && pip-compile"
@@ -47,4 +47,4 @@ delete-migrations:
 	docker-compose exec postgres createdb -U postgres sensor_db
 
 init-db: .reset-db .migrate-migrations
-	docker-compose exec django python manage.py init_db
+	# docker-compose exec django python manage.py init_db

@@ -11,11 +11,18 @@ WORKDIR $PROJECT_ROOT
 
 # Installing packages
 COPY ./package.json .
-# COPY ./package-lock.json .
+COPY ./package-lock.json .
 RUN npm install
 
-COPY . .
+COPY ./src /opt/app/src
+COPY ./public /opt/app/public
+COPY ./env.d.ts .
+COPY ./index.html .
+COPY ./tsconfig.json .
+COPY ./tsconfig.app.json .
+COPY ./tsconfig.node.json .
+COPY ./vite.config.ts .
 
 
 # Build the application
-RUN npm run build
+RUN npm run build-only

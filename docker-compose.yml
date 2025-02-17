@@ -30,7 +30,7 @@ services:
     ports:
       - 5173:5173
     volumes:
-      - ./frontend:/app
+      - ./frontend:/opt/app
     command: tail -f /dev/null
     # environment:
     #   - NODE_ENV=development
