@@ -21,7 +21,20 @@ import csv
 import io
 import pandas as pd
 import numpy as np
+from django.utils import timezone
 
+class SensorDataView(APIView):
+    serializer_class = SensorDataSerializer
+    
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(
+            data=request.data, 
+            context={'request': request}, 
+            many=True)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class SensorDataIngestView(APIView):
     serializer_class = SensorDataSerializer
@@ -144,9 +157,6 @@ class SensorAggregatedView(APIView):
         serializer = SensorAggregationTimeWindowSerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
         time_window = serializer.validated_data['time_window']
-        last_data = SensorData.objects.order_by('-timestamp').first()
-        if not last_data:
-            raise Http404()
 
         # Map time window
         time_delta_map = {
@@ -155,12 +165,12 @@ class SensorAggregatedView(APIView):
             '24h': timedelta(hours=24),
         }
         try:
-            start_time = last_data.timestamp - time_delta_map[time_window]
+            start_time = timezone.now() - time_delta_map[time_window]
         except (TypeError, ValueError) as e:
             raise ValueError({'error': f'An error occurred {e}'})
 
         # Fetch data in a single query
-        data = SensorData.objects.filter(timestamp__gte=start_time).values_list(
+        data = SensorData.objects.prefetch_related('timestamp').filter(timestamp__gte=start_time).values_list(
             'temperature', 'humidity', 'air_quality'
         )
         if not data:

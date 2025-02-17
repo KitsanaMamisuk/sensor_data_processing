@@ -1,10 +1,9 @@
 from apps.sensor.choices import TimeWindow
 from .models import SensorData
-from model_controller.serializers import ModelControllerSerializer
 from rest_framework import serializers
 
 
-class SensorDataSerializer(ModelControllerSerializer):
+class SensorDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = SensorData
         fields = '__all__'
