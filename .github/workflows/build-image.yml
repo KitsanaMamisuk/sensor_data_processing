@@ -12,7 +12,7 @@ jobs:
 
       - name: Log in to Docker Registry
         # run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login -u ${{ github.actor }} --password-stdin ${{ secrets.DOCKER_REGISTRY }}
-        run: echo "${{ secrets.DOCKER_REGISTRY }}, ${{ secrets.GITHUB_TOKEN }}, ${{ github.actor }}, ${{ secrets.TEST }}"
+        run: echo "${{ secrets.DOCKER_REGISTRY }}, ${{ secrets.API_KEY_VAL }}"
         
 
   #     - name: Build and Push Backend Image
