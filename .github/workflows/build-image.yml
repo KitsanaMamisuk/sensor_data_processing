@@ -5,6 +5,7 @@ on:
 
 jobs:
   build-backend-for-test:
+    environment: development
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
