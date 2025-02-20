@@ -11,23 +11,25 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Log in to Docker Registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login -u ${{ github.actor }} --password-stdin ${{ secrets.DOCKER_REGISTRY }}
+        # run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login -u ${{ github.actor }} --password-stdin ${{ secrets.DOCKER_REGISTRY }}
+        run: echo "${{ secrets.DOCKER_REGISTRY }}"
+        
 
-      - name: Build and Push Backend Image
-        run: |
-          docker build -t ${{ secrets.DOCKER_REGISTRY }}/django:latest ./backend
-          docker push ${{ secrets.DOCKER_REGISTRY }}/django:latest
+  #     - name: Build and Push Backend Image
+  #       run: |
+  #         docker build -t ${{ secrets.DOCKER_REGISTRY }}/django:latest ./backend
+  #         docker push ${{ secrets.DOCKER_REGISTRY }}/django:latest
 
-  build-frontend-dist-builder:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  # build-frontend-dist-builder:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
 
-      - name: Log in to Docker Registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login -u ${{ github.actor }} --password-stdin ${{ secrets.DOCKER_REGISTRY }}
+  #     - name: Log in to Docker Registry
+  #       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login -u ${{ github.actor }} --password-stdin ${{ secrets.DOCKER_REGISTRY }}
 
-      - name: Build and Push Frontend Image
-        run: |
-          docker build -t ${{ secrets.DOCKER_REGISTRY }}/frontend:builder ./frontend
-          docker push ${{ secrets.DOCKER_REGISTRY }}/frontend:builder
+  #     - name: Build and Push Frontend Image
+  #       run: |
+  #         docker build -t ${{ secrets.DOCKER_REGISTRY }}/frontend:builder ./frontend
+  #         docker push ${{ secrets.DOCKER_REGISTRY }}/frontend:builder
