@@ -1,0 +1,19 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  build-image:
+    uses: ./.github/workflows/build-image.yml
+
+  unit-test:
+    needs: build-image
+    uses: ./.github/workflows/unit-test.yml
+
+  build-deploy-dev:
+    needs: unit-test
+    uses: ./.github/workflows/build-dev.yml
+    secrets: inherit
