@@ -1,0 +1,104 @@
+name: Build and Deploy to Development
+
+on:
+  workflow_call:
+
+jobs:
+  build-backend-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login -u ${{ github.actor }} --password-stdin ${{ secrets.DOCKER_REGISTRY }}
+
+      - name: Build and Push Backend Dev Image
+        run: |
+          docker pull --quiet ${{ secrets.DOCKER_REGISTRY }}/django:latest || true
+          docker build --cache-from ${{ secrets.DOCKER_REGISTRY }}/django:latest -t ${{ secrets.DOCKER_REGISTRY }}/django:dev ./backend
+          docker push ${{ secrets.DOCKER_REGISTRY }}/django:dev
+
+  build-frontend-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login -u ${{ github.actor }} --password-stdin ${{ secrets.DOCKER_REGISTRY }}
+
+      - name: Pull Frontend Builder Image
+        run: docker pull ${{ secrets.DOCKER_REGISTRY }}/frontend:builder
+
+      - name: Build Frontend Dev Artifact
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/app ${{ secrets.DOCKER_REGISTRY }}/frontend:builder /bin/sh -c "
+            rm -rf /app/frontend/src;
+            echo -e '{\"tag\": \"dev\", \"hash\": \"${{ github.sha }}\"}' > /app/frontend/src/git-version.json;
+            cp -r /app/frontend/src /app/opt/app/src;
+            cd /app/opt/app;
+            npm run build-only;
+            cd dist;
+            zip -r /app/frontend-dev-latest.zip .;
+          "
+
+      - name: Upload Frontend Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dev-latest.zip
+          path: frontend-dev-latest.zip
+
+  deploy-backend-dev:
+    runs-on: ubuntu-latest
+    needs: build-backend-dev
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Deploy to Dev Server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEV_HOST }}
+          username: ${{ secrets.DEV_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_DEV }}
+          port: ${{ secrets.DEV_SSH_PORT }}
+          script: |
+            mkdir -p ${{ secrets.DEV_REMOTE_PATH }}
+            echo '${{ secrets.DEV_ENV_BACKEND }}' | base64 -d > ${{ secrets.DEV_REMOTE_PATH }}/.env
+            scp -r servers/dev/docker-compose.yml ${{ secrets.DEV_USERNAME }}@${{ secrets.DEV_HOST }}:${{ secrets.DEV_REMOTE_PATH }}
+            ssh -p ${{ secrets.DEV_SSH_PORT }} ${{ secrets.DEV_USERNAME }}@${{ secrets.DEV_HOST }} "
+              cd ${{ secrets.DEV_REMOTE_PATH }}
+              echo '${{ secrets.GITHUB_TOKEN }}' | docker login -u ${{ github.actor }} --password-stdin ${{ secrets.DOCKER_REGISTRY }}
+              docker-compose pull --quiet
+              docker-compose down --remove-orphans
+              docker-compose run --rm django python manage.py migrate --noinput
+              docker-compose up -d
+              docker image prune -f
+              docker logout
+            "
+
+  deploy-frontend-dev:
+    runs-on: ubuntu-latest
+    needs: build-frontend-dev
+    steps:
+      - name: Download Frontend Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dev-latest.zip
+
+      - name: Deploy Frontend to Dev Server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEV_HOST }}
+          username: ${{ secrets.DEV_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_DEV }}
+          port: ${{ secrets.DEV_SSH_PORT }}
+          script: |
+            mkdir -p ${{ secrets.DEV_REMOTE_PATH }}/.docker_volumes/frontend
+            mv frontend-dev-latest.zip ${{ secrets.DEV_REMOTE_PATH }}/.docker_volumes/frontend/
+            ssh -p ${{ secrets.DEV_SSH_PORT }} ${{ secrets.DEV_USERNAME }}@${{ secrets.DEV_HOST }} "
+              cd ${{ secrets.DEV_REMOTE_PATH }}/.docker_volumes/frontend
+              rm -rf dist
+              unzip frontend-dev-latest.zip -d dist
+              rm frontend-dev-latest.zip
+            "
